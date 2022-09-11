@@ -1,0 +1,15 @@
+{  
+    "files.exclude": {
+        "**/app/Console": true,
+        "**/app/Exceptions": true,
+        "**/bootstrap": true,
+        "**/lang": true,
+        "**/public": true,
+        "**/resources": true,
+        "**/tests": true,
+        "**/vendor": true,
+        "**/storage": true,
+        ".env.example": true,
+    } 
+    
+}

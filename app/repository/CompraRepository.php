@@ -28,7 +28,7 @@ class CompraRepository {
             ];
         } catch (PDOException $th) {
             return [
-                "mensagem" => "erro ao ao criar compras. Código " . (int)$th->getCode(),
+                "mensagem" => "erro ao ao criar compras. Código " . $th->getMessage(),
                 "status" => 500,
             ];
         }
