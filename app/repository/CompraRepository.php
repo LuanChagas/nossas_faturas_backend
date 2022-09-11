@@ -8,13 +8,13 @@ use PDOException;
 
 class CompraRepository {
 
-    public function buscarCompras(): Collection {
+    public function buscarCompras(): Collection|array {
         try {
             return Compra::all('*');
         } catch (PDOException $th) {
             return [
-                "mensagem" => "erro ao buscar compras: " . (int)$th->getCode(),
-                "status" => "500",
+                "mensagem" => "erro ao buscar compras. Código " . (int)$th->getCode(),
+                "status" => 500,
             ];
         }
     }
@@ -22,10 +22,14 @@ class CompraRepository {
     public function criarCompras(Compra $compra):array{
         try {
             $compra->save();
+            return [
+                "mensagem" => "Compra Cadastrada",
+                "status" => 201,
+            ];
         } catch (PDOException $th) {
             return [
-                "mensagem" => "erro ao ao criar compras: " . (int)$th->getCode(),
-                "status" => "500",
+                "mensagem" => "erro ao ao criar compras. Código " . (int)$th->getCode(),
+                "status" => 500,
             ];
         }
     }

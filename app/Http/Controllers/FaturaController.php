@@ -28,7 +28,7 @@ class FaturaController extends Controller {
     }
 
     public function criarFaturaMes() {
-        $this->faturaService->criarFaturaMes();
+        return $this->faturaService->criarFaturaMes();
     }
     
 }

@@ -7,9 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class Pessoa extends Model {
 
 
-    public function __construct($nome) {
-        $this->nome = $nome;
+    public function __construct(?object $attr=null) {
+        if($attr){
+            $this->nome = $attr->nome;
+        }
+        
     }
-    protected $table = 'PESSOAS';
+    protected $table = 'pessoas';
     public $timestamps = false;
 }

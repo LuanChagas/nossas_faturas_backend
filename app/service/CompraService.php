@@ -1,4 +1,5 @@
 <?php
+Namespace App\service;
 
 use App\Models\Cartao;
 use App\Models\Compra;
@@ -6,8 +7,9 @@ use App\Models\Fatura;
 
 use App\repository\CartaoRepository;
 use App\repository\CompraRepository;
-
-use Illuminate\Database\Eloquent\Collection;
+use App\repository\FaturaRepository;
+use App\Utils\FaturaUtils;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -15,14 +17,22 @@ class CompraService {
 
     private $compraRepository;
     private $cartaoRepository;
+    private $faturaRepository;
 
     public function __construct() {
         $this->compraRepository = new CompraRepository();
         $this->cartaoRepository = new CartaoRepository();
+        $this->faturaRepository = new FaturaRepository();
     }
 
-    public function buscarCompras(): Collection {
-        return $this->compraRepository->buscarCompras();
+    public function buscarCompras(): Response {
+        $response = $this->compraRepository->buscarCompras();
+        if (is_array($response)) {
+            return response(["mensagem" => $response["mensagem"]], $response["status"])
+                ->header('Content-Type', 'application/problem');
+        }
+        return response($response, 200)
+            ->header('Content-Type', 'application/json');
     }
 
     public function criarCompra(Request $request): Response {
@@ -34,7 +44,7 @@ class CompraService {
         if (is_array($compra)) {
             $mensagem = $cartao;
             return Response($mensagem["mensagem"], $mensagem["status"])
-                ->header('Content-Type', 'text/plain');
+                ->header('Content-Type', 'application/problem');
         }
         /*----alterando valor caso a parcela seja maior que 1---*/
         $compraParcelada = $compra->parcelas > 1;
@@ -46,15 +56,16 @@ class CompraService {
         $ano = $dadosTime['year'];
         $mes = $dadosTime['mon'];
         $day = $dadosTime['mday'];
-        if ($day > $cartao->dia_vencimento) {
-            $id_cartao_data = "$cartao->id$mes$ano";
-        }
+        $id_cartao_data = "$cartao->id$mes$ano";
 
         /*----buscando a fatura---*/
-        $fatura = Fatura::where('id_cartao', $compra->id_cartao)/*TODO:trocar para Faturarepositorio*/
-            ->where('data', '>', $data)
-            ->where('isFechada', 0)->first();
-
+        $fatura = $this->faturaRepository->buscarFaturaUmParametro('id_cartao_data', $id_cartao_data);
+        if (is_array($fatura)) {
+            $mensagem = $fatura;
+            return Response($mensagem["mensagem"], $mensagem["status"])
+                ->header('Content-Type', 'application/problem');
+        }
+    
         /*----criando a fatura---*/
         if (is_null($fatura)) {
             if ($day > $cartao->dia_vencimento) {
@@ -65,18 +76,27 @@ class CompraService {
                 $day = $dadosTime['mday'];
             }
             $id_cartao_data = "$cartao->id$mes$ano";
-            $novaFatura = FaturaService::criarObjectFatura(
+            $novaFatura = FaturaUtils::criarObjectFatura(
                 $compra->valor,
                 new DateTime("$ano-$mes-$cartao->dia_vencimento"),
                 0,
                 0,
                 $cartao->id,
                 $id_cartao_data
-            ); //TODO: MUDAR PARA FATURA SERVICE
-            $novaFatura->save();
+            );
+            $response = $this->faturaRepository->criarFatura($novaFatura);
+            if ($response["status"] == 500) {
+                return response($response["mensagem"], $response["status"])
+                    ->header('Content-Type', 'application/problem');
+            }
         } else {
             $fatura->valor += $compra->valor;
-            $fatura->update(); //TODO: MUDAR PARA FATURA RESPOISTORY
+            echo 'oi';
+            $response = $this->faturaRepository->criarFatura($fatura);
+            if ($response["status"] == 500) {
+                return response(["mensagem"=>$response["mensagem"]], $response["status"])
+                    ->header('Content-Type', 'application/problem');
+            }
         }
 
         if ($compraParcelada) {
@@ -90,7 +110,7 @@ class CompraService {
                 $day = $dadosTime['mday'];
                 if (is_null($fatura)) {
                     $id_cartao_data = "$cartao->id$mes$ano";
-                    $novaFatura = FaturaService::criarObjectFatura(
+                    $novaFatura = FaturaUtils::criarObjectFatura(
                         $compra->valor,
                         new DateTime("$ano-$mes-$cartao->dia_vencimento"),
                         0,
@@ -105,6 +125,6 @@ class CompraService {
                 }
             }
         }
-        return $this->compraRepository->criarCompras();
+        
     }
 }

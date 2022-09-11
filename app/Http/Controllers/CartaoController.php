@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cartao;
+
 use App\service\CartaoService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;

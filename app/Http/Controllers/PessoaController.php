@@ -3,16 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pessoa;
+use App\repository\PessoaRepository;
+use App\service\PessoaService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+
 
 class PessoaController extends Controller {
-    public function index() {
-        $pessoas = Pessoa::all('*');
-        return $pessoas;
+    private $pessoaService;
+
+    public function __construct() {
+        $this->pessoaService = new PessoaService();
+    }
+    public function index():Response {
+        return $this->pessoaService->buscarPessoas();
     }
 
-    public function criar(Request $request) {
-        $pessoa = new Pessoa($request->nome);
-        $pessoa->save();
+    public function criar(Request $request):Response {
+       $response = $this->pessoaService->criarPessoa($request);
+       return $response;
     }
 }

@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class Cartao extends Model
 {
-    public function __construct(?Request $atributos=null) {
+    public function __construct(?object $atributos=null) {
         if($atributos){
             $this->id = $atributos->id;
             $this->nome = $atributos->nome;
