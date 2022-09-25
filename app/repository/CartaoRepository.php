@@ -13,14 +13,14 @@ class CartaoRepository {
         try {
             return Cartao::all('*');
         } catch (PDOException $th) {
-            return [
-                "mensagem" => "erro ao buscar cartões. Código " . (int)$th->getCode(),
-                "status" => 500
-            ];
+            return  throw new PDOException(
+                "Erro ao econtrar Cartões. Código: " . $th->getCode(),
+                (int)$th->getCode()
+            );
         }
     }
 
-    public function criarCartao(Cartao $compra): array {
+    public function criarCartao(Cartao $compra): array|PDOException {
         try {
             $compra->save();
             return [
@@ -28,10 +28,8 @@ class CartaoRepository {
                 "status" => 201
             ];
         } catch (PDOException $th) {
-            return [
-                "mensagem" => "erro ao criar cartão. Código " . (int)$th->getCode(),
-                "status" => 500
-            ];
+            return  throw new PDOException("Erro ao criar cartão. Código: " . $th->getCode(),
+            (int)$th->getCode());
         }
     }
 
@@ -39,10 +37,8 @@ class CartaoRepository {
         try {
             return Cartao::find($id);
         } catch (PDOException $th) {
-            return [
-                "mensagem" => "erro ao encontrar cartão. Código " . (int)$th->getCode(),
-                "status" => 500
-            ];
+            return  throw new PDOException("Erro ao econtrar Cartão. Código: " . $th->getCode(),
+            (int)$th->getCode());
         }
     }
 }

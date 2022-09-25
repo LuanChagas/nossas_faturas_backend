@@ -19,6 +19,14 @@ class Compra extends Model {
         }
     }
 
+    public function pessoas(){
+        return $this->hasMany(Pessoa::class,'id_pessoa');
+    }
+
+    public function cartao(){
+        return $this->hasMany(Cartao::class,'id_cartao');
+    }
+
     protected $table = 'compras';
     public $timestamps = false;
 }

@@ -13,41 +13,38 @@ class FaturaRepository {
     function __construct() {
     }
 
-    public function buscarTodasFaturas(): Collection|array {
+    public function buscarTodasFaturas(): Collection|PDOException {
 
         try {
             return Fatura::all('*');
         } catch (PDOException $th) {
-            return [
-                "mensagem" => "erro ao buscar faturas. Código  " . (int)$th->getCode(),
-                "status" => 500,
-            ];
+            return throw new PDOException("Erro ao encontrar Faturas. Código: " . $th->getCode(),
+            (int)$th->getCode());
         }
     }
 
-    public function criarFatura(Fatura $fatura): array {
+    public function criarFatura(Fatura $fatura): array|PDOException {
         try {
             $fatura->save();
             return [
                 "mensagem" => "Fatura Criada",
-                "status" => 201,
             ];
         } catch (PDOException $th) {
-            return [
-                "mensagem" => "erro ao criar fatura. Código " . (int)$th->getCode(),
-                "status" => 500,
-            ];
+            $mensagem="";
+            if($th->getCode() == 23000){
+                $mensagem = "Já existe uma fatura registrada correspondente ao cartão registrada.";
+            }
+            return throw new PDOException("Erro ao criar Fatura. $mensagem Código: " . $th->getCode(),
+            (int)$th->getCode());
         }
     }
 
-    public function buscarFaturaUmParametro(String $campo,String $valor): Fatura|array|null {
+    public function buscarFaturaUmParametro(String $campo,String $valor): Fatura|PDOException|null {
         try {
             return Fatura::where($campo, $valor)->first();
         } catch (PDOException $th) {
-            return [
-                "mensagem" => "erro ao buscar fatura. Código " . (int)$th->getCode(),
-                "status" => 500,
-            ];
+            return throw new PDOException("Erro ao encontra fatura. Código: " . $th->getCode(),
+            (int)$th->getCode());
         }
     }
 }

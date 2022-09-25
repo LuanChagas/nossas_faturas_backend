@@ -2,10 +2,13 @@
 
 namespace App\service;
 
+use App\DTOs\PessoaDTO;
 use App\Models\Pessoa;
 use App\repository\PessoaRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use PDOException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 class PessoaService {
     private $pessoaRepository;
@@ -15,20 +18,29 @@ class PessoaService {
     }
 
     public function buscarPessoas(): Response {
-        $response = $this->pessoaRepository->buscarPessoas();
-        if (is_array($response)) {
-            return response(["mensagem" => $response["mensagem"]], $response["status"])
+        try {
+            $response = $this->pessoaRepository->buscarPessoas();
+            return response($response)
+                ->header('Content-Type', 'application/json');
+        } catch (PDOException $th) {
+            return response(["mensagem" => $th->getMessage()], 500)
                 ->header('Content-Type', 'application/problem');
         }
-        return response($response)
-            ->header('Content-Type', 'application/json');
     }
 
     public function criarPessoa(Request $request): Response {
-        $pessoa = new Pessoa($request);
-        $response = $this->pessoaRepository->criarPessoa($pessoa);
-        $header = $response["status"] != 500 ? 'application/json' : 'application/problem';
-        return response(["mensagem" => $response["mensagem"]], $response["status"])
-            ->header('Content-Type', $header);
+        try {
+            $pessoaDTO = new PessoaDTO($request);
+            $pessoa = new Pessoa($pessoaDTO);
+            $response = $this->pessoaRepository->criarPessoa($pessoa);
+            return response(["mensagem" => $response["mensagem"]], $response["status"])
+                ->header('Content-Type', 'application/json');
+        } catch (PDOException $th) {
+            return response(["mensagem" => $th->getMessage()], 500)
+                ->header('Content-Type', 'application/problem');
+        } catch (BadRequestException $th) {
+            return response(["mensagem" => $th->getMessage()], 400)
+                ->header('Content-Type', 'application/problem');
+        }
     }
 }

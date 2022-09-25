@@ -2,6 +2,7 @@
 
 namespace App\service;
 
+use App\DTOs\CompraDTO;
 use App\Models\Cartao;
 use App\Models\Compra;
 use App\Models\Fatura;
@@ -10,11 +11,14 @@ use App\repository\CartaoRepository;
 use App\repository\CompraRepository;
 use App\repository\FaturaRepository;
 use App\Utils\FaturaUtils;
+
 use DateTime;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use PDOException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 class CompraService {
 
@@ -43,10 +47,9 @@ class CompraService {
             DB::beginTransaction();
             $mensagem = [];
             /*----criando compra e buscando o cartão---*/
-            $compra = new Compra($request); //TODO: CRIAR VALIDADOR
-
-            $cartao = $this->cartaoRepository->buscarCartaoId($compra->id_cartao);
-            if (is_array($compra)) {
+            $compra = new CompraDTO($request); 
+            $cartao = $this->cartaoRepository->buscarCartaoId($compra->getIdCartao());
+            if (is_array($cartao)) {
                 $mensagem = $cartao;
                 return Response($mensagem["mensagem"], $mensagem["status"])
                     ->header('Content-Type', 'application/problem');
@@ -54,7 +57,7 @@ class CompraService {
             /*----alterando valor caso a parcela seja maior que 1---*/
             $compraParcelada = $compra->parcelas > 1;
             $compra->valor = $compraParcelada ? $compra->valor / $compra->parcelas : $compra->valor;
-
+            echo "aqui";
             /*----tratando a data para cadastro da fatura---*/
             $data = new DateTime($compra->data_compra);
             $dadosTime = getdate($data->getTimestamp());
@@ -155,13 +158,20 @@ class CompraService {
                     ->header('Content-Type', 'application/problem');
             }
             DB::commit();
-            
+
             return response(["mensagem" => "Compra cadastrada"], $response["status"])
                 ->header('Content-Type', 'application/json');
-
+        }catch (PDOException $th) {
+            DB::rollBack();
+            return response(["mensagem" => $th->getMessage()], 400)
+                ->header('Content-Type', 'application/problem'); 
+        }catch (BadRequestException $th) {
+            DB::rollBack();
+            return response(["mensagem" => "Erro na operaçao: " . $th->getMessage()], 400)
+                ->header('Content-Type', 'application/problem');
         } catch (\Throwable $th) {
             DB::rollBack();
-            return response(["mensagem" => "Erro na operaçao: ".$th->getMessage()], 500)
+            return response(["mensagem" => "Erro na operaçao: " . $th->getMessage()], 500)
                 ->header('Content-Type', 'application/problem');
         }
     }

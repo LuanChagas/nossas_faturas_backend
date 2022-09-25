@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\Fatura;
 use App\service\FaturaService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class FaturaController extends Controller {
 
@@ -16,18 +17,17 @@ class FaturaController extends Controller {
     }
 
 
-    public function index() {
+    public function index():Response {
         return $this->faturaService->buscarFaturas();
     }
 
-    public function criar(Request $request) {
+    public function criar(Request $request):Response {
 
-        $resposta =  $this->faturaService->criarFatura($request);
-        return response($resposta["mensagem"], $resposta["status"])
-        ->header('Content-Type', 'application/json');
+        return $response =  $this->faturaService->criarFatura($request);
+        
     }
 
-    public function criarFaturaMes() {
+    public function criarFaturaMes():Response {
         return $this->faturaService->criarFaturaMes();
     }
     

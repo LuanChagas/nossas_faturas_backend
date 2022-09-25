@@ -2,15 +2,17 @@
 
 namespace App\service;
 
+use App\DTOs\CartaoDTO;
+use App\DTOs\FaturaDTO;
 use App\Models\Cartao;
 use App\Models\Fatura;
 use App\repository\CartaoRepository;
 use App\repository\FaturaRepository;
-use App\Utils\FaturaUtils;
 use DateTime;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use PDOException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 class FaturaService {
 
@@ -23,61 +25,69 @@ class FaturaService {
     }
 
     public function buscarFaturas(): Response {
-        $response = $this->faturaRepository->buscarTodasFaturas();
-        if (is_array($response)) {
-            return response(["mensagem" => $response["mensagem"]], $response["status"])
+        try {
+            $response = $this->faturaRepository->buscarTodasFaturas();
+            return response($response, 200)->header('Content-Type', 'application/json');
+        } catch (PDOException $th) {
+            return response(["mensagem" => $th->getMessage()], 500)
                 ->header('Content-Type', 'application/problem');
         }
-        return response($response, 200)->header('Content-Type', 'application/json');
     }
 
     public function criarFatura(Request $request): Response {
-        $fatura = new Fatura($request);
-        $response = $this->faturaRepository->criarFatura($fatura);
-        $header = $response["status"] != 500 ? 'application/json' : 'application/problem';
-        return response(["mensagem" => $response["mensagem"]], $response["status"])
-            ->header('Content-Type', $header);
+        try {
+            $faturaDTO = new FaturaDTO($request);
+            $fatura = new Fatura($faturaDTO);
+            $response = $this->faturaRepository->criarFatura($fatura);
+            return response(["mensagem" => $response["mensagem"]], 201)
+                ->header('Content-Type', 'application/json');
+        } catch (BadRequestException $th) {
+            return response(["mensagem" => $th->getMessage()], 400)
+                ->header('Content-Type', 'application/problem');
+        } catch (PDOException $th) {
+            return response(["mensagem" => $th->getMessage()], 500)
+                ->header('Content-Type', 'application/problem');
+        }
     }
 
     public function criarFaturaMes(): Response {
-
-        $cartoes = $this->cartaoRepository->buscarCartoes();
-        if (is_array($cartoes)) {
-            return response(["mensagem" => $cartoes["mensagem"]], $cartoes["status"])
-                ->header('Content-Type', 'application/problem');
-        }
-
-        $data = new DateTime();
-        $dadosTime = getdate($data->getTimestamp());
-        $ano = $dadosTime['year'];
-        $mes = $dadosTime['mon'];
-        $day = $dadosTime['mday'];
-        foreach ($cartoes as $cartao) {
-            $cartao_data = "$cartao->id$mes$ano";
-            $fatura = $this->faturaRepository->buscarFaturaUmParametro('id_cartao_data',$cartao_data);
-
-            if (is_array($fatura)) {
-                return response(["mensagem" => $fatura["mensagem"]], $fatura["status"])
-                    ->header('Content-Type', 'application/problem');
-            }
-
-            if (is_null($fatura)) {
-                $nova_fatura = FaturaUtils::criarObjectFatura(
-                    0.0,
-                    new DateTime("$ano-$mes-$cartao->dia_vencimento"),
-                    0,
-                    0,
-                    $cartao->id,
-                    $cartao_data
-                );
-                $response = $this->faturaRepository->criarFatura($nova_fatura);
-                if ($response["status"] == 500) {
-                    return response(["mensagem" => $response["mensagem"]], 500)
-                        ->header('Content-Type', 'application/problem');
+        try {
+            $cartoes = $this->cartaoRepository->buscarCartoes();
+            $listaCartao = $cartoes->map(function ($x) {
+                $cartaoDTO = new CartaoDTO();
+                $cartaoDTO->arrayToCartaoDTO($x);
+                return $cartaoDTO;
+            })->toArray();
+            $data = new DateTime();
+            $ano = date('Y', $data->getTimestamp());
+            $mes = date('m', $data->getTimestamp());
+            foreach ($listaCartao as $cartao) {
+                $cartao_data = $cartao->getId() . "$mes$ano";
+                $fatura = $this->faturaRepository->buscarFaturaUmParametro('id_cartao_data', $cartao_data);
+                $faturaDTO = new FaturaDTO($fatura);
+                if (!isset($faturaDTO)) {
+                    $nova_fatura = new FaturaDTO();
+                    $nova_fatura->setValor(0.0);
+                    $nova_fatura->setData("$ano-$mes-" . $cartao->getDiaVencimento());
+                    $nova_fatura->setIsFechada(false);
+                    $nova_fatura->setIsPaga(false);
+                    $nova_fatura->setIdCartao($cartao->getId());
+                    $nova_fatura->setIdCartaoData($cartao_data);
+                    $nova_fatura_model = new Fatura($nova_fatura);
+                    $this->faturaRepository->criarFatura($nova_fatura_model);
                 }
             }
+            return response(["mensagem" => "Faturas do mês checadas"], 200)
+                ->header('Content-Type', 'application/json');
+        } catch (BadRequestException $th) {
+            return response(["mensagem" => $th->getMessage()], 400)
+                ->header('Content-Type', 'application/problem');
+        } catch (\PDOException $th) {
+            return response(["mensagem" => $th->getMessage()], 500)
+                ->header('Content-Type', 'application/problem');
+        } catch (\Throwable $th) {
+            return response(["mensagem" => $th->getMessage()], 500)
+                ->header('Content-Type', 'application/problem');
         }
-        return response(["mensagem" => "Faturas do mês checadas"], 200)
-            ->header('Content-Type', 'application/json');
     }
 }

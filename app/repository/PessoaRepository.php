@@ -10,17 +10,15 @@ use PDOException;
 class PessoaRepository {
 
 
-    public function buscarPessoas(): Collection|array {
+    public function buscarPessoas(): Collection|PDOException {
         try {
-            return Pessoa::all('*');
+            return Pessoa::with('compras')->get(["sds"]);
         } catch (PDOException $th) {
-            return [
-                "mensagem" => "Erro ao buscar Pessoas. Código " . $th->getCode(),
-                "status" => 500
-            ];
+            return throw new PDOException("Erro ao buscar PessoaS. Código: " . $th->getCode(),
+            (int)$th->getCode());
         }
     }
-    public function criarPessoa(Pessoa $pessoa): array {
+    public function criarPessoa(Pessoa $pessoa): array|PDOException {
         try {
             $pessoa->save();
             return [
@@ -28,10 +26,8 @@ class PessoaRepository {
                 "status" => 201
             ];
         } catch (PDOException $th) {
-            return [
-                "mensagem" => "Erro ao criar Pessoa. Código " . $th->getCode(),
-                "status" => 500
-            ];
+            return throw new PDOException("Erro ao criar Pessoa. Código: " . $th->getCode(),
+            (int)$th->getCode());
         }
     }
 }

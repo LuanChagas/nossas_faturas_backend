@@ -8,19 +8,19 @@ use Illuminate\Http\Request;
 
 class Fatura extends Model {
 
-    public function __construct(?object $atributos = null) {
-        if ($atributos) {
-            $this->valor = $atributos->valor;
-            $this->data = $atributos->data;
-            $this->isFechada = $atributos->isFechada;
-            $this->isPaga = $atributos->isPaga;
-            $this->id_cartao = $atributos->id_cartao;
-            $this->id_cartao_data = $atributos->id_cartao_data;
+    public function __construct(?object $faturaDTO = null) {
+        if ($faturaDTO) {
+            $this->valor = $faturaDTO->getValor();
+            $this->data = $faturaDTO->getData();
+            $this->isFechada = $faturaDTO->getIsFechada();
+            $this->isPaga = $faturaDTO->getIsPaga();
+            $this->id_cartao = $faturaDTO->getIdCartao();
+            $this->id_cartao_data = $faturaDTO->getIdCartaoData();
         }
     }
 
     public function cartao() {
-        $this->belongsTo(Cartao::class);
+        $this->hasMany(Cartao::class, 'id_cartao');
     }
     protected $table = 'faturas';
     public $timestamps = false;
