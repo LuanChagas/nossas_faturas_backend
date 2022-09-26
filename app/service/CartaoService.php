@@ -19,8 +19,12 @@ class CartaoService {
 
     public function buscarCartoes(): Response {
         try {
-            $response =  $this->cartaoRepository->buscarCartoes();
-            return Response($response)
+            $cartoes = $this->cartaoRepository->buscarCartoes();
+            $response = $cartoes->map(function ($x) {
+                $cartaoDTO = new CartaoDTO($x);
+                return $cartaoDTO->objecToArray();
+            })->toArray();
+            return Response($response, 200)
                 ->header('Content-Type', 'application/json');
         } catch (PDOException $th) {
             return Response(["mensagem" => $th->getMessage()], 500)
@@ -32,8 +36,8 @@ class CartaoService {
         try {
             $cartaoDTO = new CartaoDTO($request);
             $cartao = new Cartao($cartaoDTO);
-            $response = $this->cartaoRepository->criarCartao($cartao);
-            return response(["mensagem" => $response["mensagem"]], 201)
+            $this->cartaoRepository->criarCartao($cartao);
+            return response(["mensagem" => "Cartao Criado"], 201)
                 ->header('Content-Type', 'application/json');
         } catch (PDOException $th) {
             return Response(["mensagem" => $th->getMessage()], 500)

@@ -20,11 +20,11 @@ class PessoaDTO {
         }
     }
 
-    public function getId(): Number {
+    public function getId(): Int {
         return $this->id;
     }
 
-    public function setId(Number $id) {
+    public function setId(Int $id) {
         $identificador = "id";
         $rs = Validacao::validarInteiro($id, $identificador);
         if ($rs["resultado"]) {
@@ -46,5 +46,12 @@ class PessoaDTO {
             return;
         }
         throw new BadRequestException($rs["mensagem"]);
+    }
+
+    public function objectToArray() {
+        return [
+            "id" => $this->getId(),
+            "valor" => $this->getNome(),
+        ];
     }
 }

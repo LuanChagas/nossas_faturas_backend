@@ -8,14 +8,15 @@ use Illuminate\Http\Request;
 
 class Fatura extends Model {
 
-    public function __construct(?object $faturaDTO = null) {
-        if ($faturaDTO) {
-            $this->valor = $faturaDTO->getValor();
-            $this->data = $faturaDTO->getData();
-            $this->isFechada = $faturaDTO->getIsFechada();
-            $this->isPaga = $faturaDTO->getIsPaga();
-            $this->id_cartao = $faturaDTO->getIdCartao();
-            $this->id_cartao_data = $faturaDTO->getIdCartaoData();
+    public function __construct(?object $obj = null) {
+        if ($obj) {
+            $this->id = $obj->getId();
+            $this->valor = $obj->getValor();
+            $this->data = $obj->getData();
+            $this->isFechada = $obj->getIsFechada();
+            $this->isPaga = $obj->getIsPaga();
+            $this->id_cartao = $obj->getIdCartao();
+            $this->id_cartao_data = $obj->getIdCartaoData();
         }
     }
 

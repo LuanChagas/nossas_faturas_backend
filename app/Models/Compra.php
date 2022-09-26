@@ -7,15 +7,15 @@ use Illuminate\Http\Request;
 
 class Compra extends Model {
 
-    public function __construct(?Request $atributos = null) {
-        if ($atributos) {
-            $this->nome = $atributos->nome;
-            $this->descricao = $atributos->descricao;
-            $this->data_compra = $atributos->data_compra;
-            $this->valor = $atributos->valor;
-            $this->parcelas = $atributos->parcelas;
-            $this->id_pessoa = $atributos->id_pessoa;
-            $this->id_cartao = $atributos->id_cartao;
+    public function __construct(?object $obj = null) {
+        if ($obj) {
+            $this->nome = $obj->getNome();
+            $this->descricao = $obj->getDescricao();
+            $this->data_compra = $obj->getDataCompra();
+            $this->valor = $obj->getValor();
+            $this->parcelas = $obj->getParcelas();
+            $this->id_pessoa = $obj->getIdPessoa();
+            $this->id_cartao = $obj->getIdCartao();
         }
     }
 

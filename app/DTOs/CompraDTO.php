@@ -39,8 +39,8 @@ class CompraDTO {
 
     public function setId($id) {
         $identificador = "id";
-        $rs = Validacao::validarInteiro($id,$identificador);
-        if($rs["resultado"]){
+        $rs = Validacao::validarInteiro($id, $identificador);
+        if ($rs["resultado"]) {
             $this->id = $id;
             return;
         }
@@ -83,7 +83,7 @@ class CompraDTO {
         $mensagem = "";
         if (isset($data_compra)) {
             if (preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $data_compra)) {
-                $this->data_compra = $data_compra;
+                $this->data_compra = new DateTime($data_compra);
                 return;
             } else {
                 $mensagem = "Formato invalido data da compra";
@@ -168,5 +168,17 @@ class CompraDTO {
             $mensagem = "id_cartao esta vazio ";
         }
         throw new BadRequestException($mensagem);
+    }
+
+    public function objectToArray() {
+        return [
+            "nome" => $this->getNome(),
+            "descricao" => $this->getDescricao(),
+            "data_compra" => $this->getDataCompra()->format("Y-m-d"),
+            "valor" => $this->getValor(),
+            "parcelas" => $this->getParcelas(),
+            "id_pessoa" => $this->getIdPessoa(),
+            "id_cartao" => $this->getIdCartao(),
+        ];
     }
 }

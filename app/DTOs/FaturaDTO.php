@@ -52,7 +52,7 @@ class FaturaDTO {
         $identificador = "Valor";
         $rs = Validacao::validarDecimal($valor, $identificador);
         if ($rs["resultado"]) {
-            $this->valor = $valor;
+            $this->valor += $valor;
             return;
         }
         throw new BadRequestException($rs["mensagem"]);
@@ -131,5 +131,17 @@ class FaturaDTO {
             return;
         }
         throw new BadRequestException($rs["mensagem"]);
+    }
+
+    public function objectToArray() {
+        return [
+            "id" => $this->getId(),
+            "valor" => $this->getValor(),
+            "data" => $this->getData()->format('Y-m-d'),
+            "isFechada" => $this->getIsFechada(),
+            "isPaga" => $this->getIsPaga(),
+            "id_cartao" => $this->getIdCartao(),
+            "id_cartao_data" => $this->getIdCartaoData(),
+        ];
     }
 }

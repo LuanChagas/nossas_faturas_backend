@@ -12,25 +12,16 @@ class CompraRepository {
         try {
             return Compra::all('*');
         } catch (PDOException $th) {
-            return [
-                "mensagem" => "erro ao buscar compras. Código " . (int)$th->getCode(),
-                "status" => 500,
-            ];
+            return throw new PDOException("Erro ao encontrar compras. Código ".
+             $th->getCode());
         }
     }
 
-    public function criarCompras(Compra $compra):array{
+    public function criarCompras(Compra $compra){
         try {
             $compra->save();
-            return [
-                "mensagem" => "Compra Cadastrada",
-                "status" => 201,
-            ];
         } catch (PDOException $th) {
-            return [
-                "mensagem" => "erro ao ao criar compras. Código " . $th->getMessage(),
-                "status" => 500,
-            ];
+            return throw new PDOException("Erro ao criar Compra. Código: " . $th->getCode());
         }
     }
 }

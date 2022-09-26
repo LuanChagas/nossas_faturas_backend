@@ -127,14 +127,15 @@ class CartaoDTO {
         throw new BadRequestException($rs["mensagem"]);
     }
 
-     public function arrayToCartaoDTO($arr){
-        $this->id = $arr["id"];
-        $this->nome = $arr["nome"];
-        $this->pix = $arr["pix"];
-        $this->dia_fechamento = $arr["dia_fechamento"];
-        $this->dia_vencimento = $arr["dia_vencimento"];
-        $this->limite_total = $arr["limite_total"];
-        $this->limite_parcial = $arr["limite_parcial"];
+    public function objecToArray() {
+        return [
+            "id" => $this->id,
+            "nome" => $this->getNome(),
+            "pix" => $this->getPix(),
+            "dia_fechamento" => $this->getDiaFechamento(),
+            "dia_vencimento" => $this->getDiaVencimento(),
+            "limite_total" => $this->getLimiteTotal(),
+            "limite_parcial" => $this->getLimiteParcial()
+        ];
     }
-    
 }

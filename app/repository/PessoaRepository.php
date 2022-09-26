@@ -10,24 +10,22 @@ use PDOException;
 class PessoaRepository {
 
 
-    public function buscarPessoas(): Collection|PDOException {
+    public function buscarPessoas(): Collection {
         try {
-            return Pessoa::with('compras')->get(["sds"]);
+            return Pessoa::with('compras')->get(["*"]);
         } catch (PDOException $th) {
-            return throw new PDOException("Erro ao buscar PessoaS. Código: " . $th->getCode(),
-            (int)$th->getCode());
+            return throw new PDOException(
+                "Erro ao buscar Pessoas. Código: " . $th->getCode()
+            );
         }
     }
-    public function criarPessoa(Pessoa $pessoa): array|PDOException {
+    public function criarPessoa(Pessoa $pessoa) {
         try {
             $pessoa->save();
-            return [
-                "mensagem" => "Pessoa criada com sucesso",
-                "status" => 201
-            ];
         } catch (PDOException $th) {
-            return throw new PDOException("Erro ao criar Pessoa. Código: " . $th->getCode(),
-            (int)$th->getCode());
+            return throw new PDOException(
+                "Erro ao criar Pessoa. Código: " . $th->getCode()
+            );
         }
     }
 }

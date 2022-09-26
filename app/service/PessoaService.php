@@ -32,8 +32,8 @@ class PessoaService {
         try {
             $pessoaDTO = new PessoaDTO($request);
             $pessoa = new Pessoa($pessoaDTO);
-            $response = $this->pessoaRepository->criarPessoa($pessoa);
-            return response(["mensagem" => $response["mensagem"]], $response["status"])
+            $this->pessoaRepository->criarPessoa($pessoa);
+            return response(["mensagem" => "Pessoa criada com sucesso"], 201)
                 ->header('Content-Type', 'application/json');
         } catch (PDOException $th) {
             return response(["mensagem" => $th->getMessage()], 500)

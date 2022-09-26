@@ -2,7 +2,9 @@
 
 namespace App\service;
 
+use App\DTOs\CartaoDTO;
 use App\DTOs\CompraDTO;
+use App\DTOs\FaturaDTO;
 use App\Models\Cartao;
 use App\Models\Compra;
 use App\Models\Fatura;
@@ -25,147 +27,69 @@ class CompraService {
     private $compraRepository;
     private $cartaoRepository;
     private $faturaRepository;
+    private $faturaService;
 
     public function __construct() {
         $this->compraRepository = new CompraRepository();
         $this->cartaoRepository = new CartaoRepository();
         $this->faturaRepository = new FaturaRepository();
+        $this->faturaService = new FaturaService();
     }
 
     public function buscarCompras(): Response {
-        $response = $this->compraRepository->buscarCompras();
-        if (is_array($response)) {
-            return response(["mensagem" => $response["mensagem"]], $response["status"])
+        try {
+            $response = $this->compraRepository->buscarCompras();
+            return response($response, 200)
+                ->header('Content-Type', 'application/json');
+        } catch (PDOException $th) {
+            return response(["mensagem" => $th->getMessage()], $response["status"])
                 ->header('Content-Type', 'application/problem');
         }
-        return response($response, 200)
-            ->header('Content-Type', 'application/json');
     }
 
     public function criarCompra(Request $request): Response {
         try {
             DB::beginTransaction();
-            $mensagem = [];
             /*----criando compra e buscando o cartão---*/
-            $compra = new CompraDTO($request); 
-            $cartao = $this->cartaoRepository->buscarCartaoId($compra->getIdCartao());
-            if (is_array($cartao)) {
-                $mensagem = $cartao;
-                return Response($mensagem["mensagem"], $mensagem["status"])
-                    ->header('Content-Type', 'application/problem');
-            }
+            $compra = new CompraDTO($request);
+            $cartao = new CartaoDTO($this->cartaoRepository->buscarCartaoId($compra->getIdCartao()));
+
             /*----alterando valor caso a parcela seja maior que 1---*/
-            $compraParcelada = $compra->parcelas > 1;
-            $compra->valor = $compraParcelada ? $compra->valor / $compra->parcelas : $compra->valor;
-            echo "aqui";
+            $compraParcelada = $compra->getParcelas() > 1;
+            $valorParcelado = $compraParcelada
+                ? $compra->getValor() / $compra->getParcelas()
+                : $compra->getValor();
+
             /*----tratando a data para cadastro da fatura---*/
-            $data = new DateTime($compra->data_compra);
-            $dadosTime = getdate($data->getTimestamp());
-            $day = $dadosTime['mday'];
-
-            if ($day > $cartao->dia_vencimento) {
-                date_add($data, date_interval_create_from_date_string('1 Month'));
-                $dadosTime = getdate($data->getTimestamp());
-                $ano = $dadosTime['year'];
-                $mes = $dadosTime['mon'];
-            } else {
-                $ano = $dadosTime['year'];
-                $mes = $dadosTime['mon'];
+            $data = new DateTime();
+            $ano = date("Y", $data->getTimestamp());
+            $mes = date("m", $data->getTimestamp());
+            $dataCompra = new DateTime($compra->getDataCompra()->format("Y-m-d"));
+            $dataFechamento = new DateTime("$ano-$mes-" . $cartao->getDiaFechamento());
+            if ($dataCompra > $dataFechamento) {
+                date_add($data, date_interval_create_from_date_string("1 Month"));
             }
-
-            $id_cartao_data = "$cartao->id$mes$ano";
-
-            /*----buscando a fatura---*/
-            $fatura = $this->faturaRepository->buscarFaturaUmParametro('id_cartao_data', $id_cartao_data);
-            if (is_array($fatura)) {
-                $mensagem = $fatura;
-                return Response($mensagem["mensagem"], $mensagem["status"])
-                    ->header('Content-Type', 'application/problem');
-            }
-
-            /*----criando a fatura---*/
-            if (is_null($fatura)) {
-                /*
-            if ($day > $cartao->dia_vencimento) {
-                $nova_data = date_add($data, date_interval_create_from_date_string('1 Month'));
-                $dadosTime = getdate($nova_data->getTimestamp());
-                $ano = $dadosTime['year'];
-                $mes = $dadosTime['mon'];
-                $day = $dadosTime['mday'];
-            }
-            */
-                $id_cartao_data = "$cartao->id$mes$ano";
-                $novaFatura = FaturaUtils::criarObjectFatura(
-                    $compra->valor,
-                    new DateTime("$ano-$mes-$cartao->dia_vencimento"),
-                    0,
-                    0,
-                    $cartao->id,
-                    $id_cartao_data
-                );
-                $response = $this->faturaRepository->criarFatura($novaFatura);
-                if ($response["status"] == 500) {
-                    return response(["mensagem" => $response["mensagem"]], $response["status"])
-                        ->header('Content-Type', 'application/problem');
-                }
-            } else {
-                $fatura->valor += $compra->valor;
-                $response = $this->faturaRepository->criarFatura($fatura);
-                if ($response["status"] == 500) {
-                    return response(["mensagem" => $response["mensagem"]], $response["status"])
-                        ->header('Content-Type', 'application/problem');
-                }
-            }
-
+            $this->faturaService->persistirFatura($cartao, $data, $valorParcelado);
             if ($compraParcelada) {
-                for ($i = 1; $i < $compra->parcelas; $i++) {
+                for ($i = 1; $i < $compra->getParcelas(); $i++) {
                     $nova_data = clone $data;
                     date_add($nova_data, date_interval_create_from_date_string($i . ' Month'));
-                    $dadosTime = getdate($nova_data->getTimestamp());
-                    $ano = $dadosTime['year'];
-                    $mes = $dadosTime['mon'];
-                    $day = $dadosTime['mday'];
-                    $id_cartao_data = "$cartao->id$mes$ano";
-                    $fatura = $this->faturaRepository->buscarFaturaUmParametro('id_cartao_data', $id_cartao_data);
-                    if (is_null($fatura)) {
-                        $novaFatura = FaturaUtils::criarObjectFatura(
-                            $compra->valor,
-                            new DateTime("$ano-$mes-$cartao->dia_vencimento"),
-                            0,
-                            0,
-                            $cartao->id,
-                            $id_cartao_data
-                        );
-                        $response = $this->faturaRepository->criarFatura($novaFatura);
-                        if ($response["status"] == 500) {
-                            return response(["mensagem" => $response["mensagem"]], $response["status"])
-                                ->header('Content-Type', 'application/problem');
-                        }
-                    } else {
-                        $fatura->valor += $compra->valor;
-                        $response = $this->faturaRepository->criarFatura($fatura);
-                        if ($response["status"] == 500) {
-                            return response(["mensagem" => $response["mensagem"]], $response["status"])
-                                ->header('Content-Type', 'application/problem');
-                        }
-                    }
+                    $this->faturaService->persistirFatura($cartao, $nova_data, $valorParcelado);
                 }
             }
 
-            $response = $this->compraRepository->criarCompras($compra);
-            if ($response["status"] == 500) {
-                return response(["mensagem" => $response["mensagem"]], $response["status"])
-                    ->header('Content-Type', 'application/problem');
-            }
+            $compra = new Compra($compra);
+            $this->compraRepository->criarCompras($compra);
+
             DB::commit();
 
-            return response(["mensagem" => "Compra cadastrada"], $response["status"])
+            return response(["mensagem" => "Compra Cadastrada",], 201)
                 ->header('Content-Type', 'application/json');
-        }catch (PDOException $th) {
+        } catch (PDOException $th) {
             DB::rollBack();
-            return response(["mensagem" => $th->getMessage()], 400)
-                ->header('Content-Type', 'application/problem'); 
-        }catch (BadRequestException $th) {
+            return response(["mensagem" => $th->getMessage()], 500)
+                ->header('Content-Type', 'application/problem');
+        } catch (BadRequestException $th) {
             DB::rollBack();
             return response(["mensagem" => "Erro na operaçao: " . $th->getMessage()], 400)
                 ->header('Content-Type', 'application/problem');

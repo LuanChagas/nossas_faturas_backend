@@ -4,7 +4,6 @@ namespace App\service;
 
 use App\DTOs\CartaoDTO;
 use App\DTOs\FaturaDTO;
-use App\Models\Cartao;
 use App\Models\Fatura;
 use App\repository\CartaoRepository;
 use App\repository\FaturaRepository;
@@ -13,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use PDOException;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
+
+use function PHPUnit\Framework\isNull;
 
 class FaturaService {
 
@@ -26,7 +27,11 @@ class FaturaService {
 
     public function buscarFaturas(): Response {
         try {
-            $response = $this->faturaRepository->buscarTodasFaturas();
+            $fatura = $this->faturaRepository->buscarTodasFaturas();
+            $response = $fatura->map(function ($x) {
+                $fat = new FaturaDTO($x);
+                return $fat->objectToArray();
+            });
             return response($response, 200)->header('Content-Type', 'application/json');
         } catch (PDOException $th) {
             return response(["mensagem" => $th->getMessage()], 500)
@@ -34,12 +39,12 @@ class FaturaService {
         }
     }
 
-    public function criarFatura(Request $request): Response {
+    public function criarFatura(Object $request): Response {
         try {
             $faturaDTO = new FaturaDTO($request);
             $fatura = new Fatura($faturaDTO);
-            $response = $this->faturaRepository->criarFatura($fatura);
-            return response(["mensagem" => $response["mensagem"]], 201)
+            $this->faturaRepository->criarFatura($fatura);
+            return response(["mensagem" => "Fatura Criada"], 201)
                 ->header('Content-Type', 'application/json');
         } catch (BadRequestException $th) {
             return response(["mensagem" => $th->getMessage()], 400)
@@ -50,32 +55,40 @@ class FaturaService {
         }
     }
 
-    public function criarFaturaMes(): Response {
+    public function persistirFatura($cartao, $data, $valor = null) {
+        if (is_null($valor)) {
+            $valor = 0.0;
+        }
+        $ano = date('Y', $data->getTimestamp());
+        $mes = date('m', $data->getTimestamp());
+        $id_cartao_data = $cartao->getId() . "$mes$ano";
+
+        $faturaModel = $this->faturaRepository->buscarFaturaUmParametro('id_cartao_data', $id_cartao_data);
+        if (is_null($faturaModel)) {
+            $fatura = new Fatura();
+            $fatura->valor = $valor;
+            $fatura->data =  new DateTime("$ano-$mes-" . $cartao->getDiaVencimento());
+            $fatura->isFechada = 0;
+            $fatura->isPaga = 0;
+            $fatura->id_cartao = $cartao->getId();
+            $fatura->id_cartao_data = $id_cartao_data;
+            $this->faturaRepository->criarFatura($fatura);
+        } else {
+            $faturaModel->valor += $valor;
+            $this->faturaRepository->criarFatura($faturaModel);
+        }
+    }
+
+    public function checarFaturasMes(): Response {
         try {
             $cartoes = $this->cartaoRepository->buscarCartoes();
             $listaCartao = $cartoes->map(function ($x) {
-                $cartaoDTO = new CartaoDTO();
-                $cartaoDTO->arrayToCartaoDTO($x);
+                $cartaoDTO = new CartaoDTO($x);
                 return $cartaoDTO;
             })->toArray();
             $data = new DateTime();
-            $ano = date('Y', $data->getTimestamp());
-            $mes = date('m', $data->getTimestamp());
             foreach ($listaCartao as $cartao) {
-                $cartao_data = $cartao->getId() . "$mes$ano";
-                $fatura = $this->faturaRepository->buscarFaturaUmParametro('id_cartao_data', $cartao_data);
-                $faturaDTO = new FaturaDTO($fatura);
-                if (!isset($faturaDTO)) {
-                    $nova_fatura = new FaturaDTO();
-                    $nova_fatura->setValor(0.0);
-                    $nova_fatura->setData("$ano-$mes-" . $cartao->getDiaVencimento());
-                    $nova_fatura->setIsFechada(false);
-                    $nova_fatura->setIsPaga(false);
-                    $nova_fatura->setIdCartao($cartao->getId());
-                    $nova_fatura->setIdCartaoData($cartao_data);
-                    $nova_fatura_model = new Fatura($nova_fatura);
-                    $this->faturaRepository->criarFatura($nova_fatura_model);
-                }
+                $this->persistirFatura($cartao, $data);
             }
             return response(["mensagem" => "Faturas do mês checadas"], 200)
                 ->header('Content-Type', 'application/json');
