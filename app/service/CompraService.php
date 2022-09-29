@@ -4,13 +4,15 @@ namespace App\service;
 
 use App\DTOs\CartaoDTO;
 use App\DTOs\CompraDTO;
+use App\DTOs\FaturaCompraDTO;
 use App\DTOs\FaturaDTO;
 use App\Models\Cartao;
 use App\Models\Compra;
 use App\Models\Fatura;
-
+use App\Models\FaturaCompra;
 use App\repository\CartaoRepository;
 use App\repository\CompraRepository;
+use App\repository\FaturaCompraRepository;
 use App\repository\FaturaRepository;
 use App\Utils\FaturaUtils;
 
@@ -28,12 +30,14 @@ class CompraService {
     private $cartaoRepository;
     private $faturaRepository;
     private $faturaService;
+    private $faturaCompraRepository;
 
     public function __construct() {
         $this->compraRepository = new CompraRepository();
         $this->cartaoRepository = new CartaoRepository();
         $this->faturaRepository = new FaturaRepository();
         $this->faturaService = new FaturaService();
+        $this->faturaCompraRepository = new FaturaCompraRepository();
     }
 
     public function buscarCompras(): Response {
@@ -42,7 +46,7 @@ class CompraService {
             return response($response, 200)
                 ->header('Content-Type', 'application/json');
         } catch (PDOException $th) {
-            return response(["mensagem" => $th->getMessage()], $response["status"])
+            return response(["mensagem" => $th->getMessage()], 500)
                 ->header('Content-Type', 'application/problem');
         }
     }
@@ -51,35 +55,48 @@ class CompraService {
         try {
             DB::beginTransaction();
             /*----criando compra e buscando o cartão---*/
-            $compra = new CompraDTO($request);
-            $cartao = new CartaoDTO($this->cartaoRepository->buscarCartaoId($compra->getIdCartao()));
-
+   
+            $compraDTO = new CompraDTO($request);
+            $cartao = new CartaoDTO($this->cartaoRepository->buscarCartaoId($compraDTO->getIdCartao()));
+            
             /*----alterando valor caso a parcela seja maior que 1---*/
-            $compraParcelada = $compra->getParcelas() > 1;
+            $compraParcelada = $compraDTO->getParcelas() > 1;
             $valorParcelado = $compraParcelada
-                ? $compra->getValor() / $compra->getParcelas()
-                : $compra->getValor();
-
+                ? $compraDTO->getValor() / $compraDTO->getParcelas()
+                : $compraDTO->getValor();
+                
             /*----tratando a data para cadastro da fatura---*/
             $data = new DateTime();
             $ano = date("Y", $data->getTimestamp());
             $mes = date("m", $data->getTimestamp());
-            $dataCompra = new DateTime($compra->getDataCompra()->format("Y-m-d"));
+            $dataCompra = new DateTime($compraDTO->getDataCompra()->format("Y-m-d"));
             $dataFechamento = new DateTime("$ano-$mes-" . $cartao->getDiaFechamento());
             if ($dataCompra > $dataFechamento) {
                 date_add($data, date_interval_create_from_date_string("1 Month"));
             }
-            $this->faturaService->persistirFatura($cartao, $data, $valorParcelado);
+            $compra = new Compra($compraDTO);
+            $id_compra_inserted = $this->compraRepository->criarCompras($compra);
+            $id_fatura_inserted = $this->faturaService->persistirFatura($cartao, $data, $valorParcelado);
+            $faturaCompraDTO = new FaturaCompraDTO();
+            $faturaCompraDTO->setIdCompra($id_compra_inserted);
+            $faturaCompraDTO->setIdFatura($id_fatura_inserted);
+            $faturaCompraDTO->setDescricao('1'.'//'.$compraDTO->getParcelas());
+            $faturaCompraDTO->setValor($valorParcelado);
+            $faturaCompra = new FaturaCompra($faturaCompraDTO);
+            $this->faturaCompraRepository->criarCompras($faturaCompra);
+
             if ($compraParcelada) {
-                for ($i = 1; $i < $compra->getParcelas(); $i++) {
+                for ($i = 1; $i < $compraDTO->getParcelas(); $i++) {
                     $nova_data = clone $data;
                     date_add($nova_data, date_interval_create_from_date_string($i . ' Month'));
-                    $this->faturaService->persistirFatura($cartao, $nova_data, $valorParcelado);
+                    $id_compra_inserted = $this->faturaService->persistirFatura($cartao, $nova_data, $valorParcelado);
+                    $faturaCompraDTO->setIdFatura($id_fatura_inserted);
+                    $faturaCompraDTO->setDescricao($i+1 .'/'.$compraDTO->getParcelas());
+                    $faturaCompraDTO->setValor($valorParcelado);
+                    $faturaCompra = new FaturaCompra($faturaCompraDTO);
+                    $this->faturaCompraRepository->criarCompras($faturaCompra);
                 }
             }
-
-            $compra = new Compra($compra);
-            $this->compraRepository->criarCompras($compra);
 
             DB::commit();
 
@@ -96,6 +113,22 @@ class CompraService {
         } catch (\Throwable $th) {
             DB::rollBack();
             return response(["mensagem" => "Erro na operaçao: " . $th->getMessage()], 500)
+                ->header('Content-Type', 'application/problem');
+        }
+    }
+
+    public function buscarFaturaCompra() {
+        try {
+            $response = $this->faturaCompraRepository->buscarFaturaCompra();
+            /*
+            return response(['mensagem'=>"////"], 200)
+                ->header('Content-Type', 'application/json')
+                ;
+                */
+               return  response()->json($response
+               , 200, [], JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT);
+        } catch (PDOException $th) {
+            return response(["mensagem" => $th->getMessage()], 500)
                 ->header('Content-Type', 'application/problem');
         }
     }

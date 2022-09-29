@@ -28,4 +28,8 @@ class CompraController extends Controller {
     public function criar(Request $request):Response {
         return $this->compraService->criarCompra($request);      
     }
+
+    public function compraFatura() {
+        return $this->compraService->buscarFaturaCompra();      
+    }
 }

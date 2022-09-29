@@ -5,7 +5,6 @@ namespace App\repository;
 
 use App\Models\Fatura;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\Response;
 use PDOException;
 
 class FaturaRepository {
@@ -25,6 +24,7 @@ class FaturaRepository {
     public function criarFatura(Fatura $fatura) {
         try {
             $fatura->save();
+            return $fatura->id;
         } catch (PDOException $th) {
             return throw new PDOException("Erro ao criar Fatura. Código: " . $th->getCode());
         }

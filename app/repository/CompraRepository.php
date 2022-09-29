@@ -17,9 +17,10 @@ class CompraRepository {
         }
     }
 
-    public function criarCompras(Compra $compra){
+    public function criarCompras(Compra $compra):int{
         try {
             $compra->save();
+            return $compra->id;
         } catch (PDOException $th) {
             return throw new PDOException("Erro ao criar Compra. Código: " . $th->getCode());
         }

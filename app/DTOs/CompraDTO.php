@@ -52,19 +52,13 @@ class CompraDTO {
     }
 
     public function setNome($nome) {
-        $mensagem = "";
-        if (isset($nome)) {
-            $reg = "/^[A-Za-záàâãéèêíïóôõöúçñÁÀÂÃÉÈÍÏÓÔÕÖÚÇÑ ]+$/";
-            if (preg_match($reg, $nome)) {
-                $this->nome = $nome;
-                return;
-            } else {
-                $mensagem = "Nome não está em formato Válido";
-            }
-        } else {
-            $mensagem = "Nome não pode ser vazio";
+        $identificador = "Nome";
+        $rs = Validacao::validarNome($nome, $identificador);
+        if ($rs["resultado"]) {
+            $this->nome = $nome;
+            return;
         }
-        throw new BadRequestException($mensagem);
+        throw new BadRequestException($rs["mensagem"]);
     }
 
     public function getDescricao(): String {
@@ -80,18 +74,13 @@ class CompraDTO {
     }
 
     public function setDataCompra($data_compra) {
-        $mensagem = "";
-        if (isset($data_compra)) {
-            if (preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $data_compra)) {
-                $this->data_compra = new DateTime($data_compra);
-                return;
-            } else {
-                $mensagem = "Formato invalido data da compra";
-            }
-        } else {
-            $mensagem = "Data da compra não pode ser vazio ";
+        $identificador = "Data da Compra";
+        $rs = Validacao::validarData($data_compra, $identificador);
+        if ($rs["resultado"]) {
+            $this->data_compra = new DateTime($data_compra);
+            return;
         }
-        throw new BadRequestException($mensagem);
+        throw new BadRequestException($rs["mensagem"]);
     }
 
     public function getValor(): Float {

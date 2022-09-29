@@ -33,5 +33,6 @@ Route::post('/fatura', [FaturaController::class,'criar']);
 Route::get('/criarfaturames', [FaturaController::class,'criarFaturaMes']);
 
 Route::get('/compra',[CompraController::class,'index']);
+Route::get('/comprafatura',[CompraController::class,'compraFatura']);
 Route::post('/compra',[CompraController::class,'criar']);
 

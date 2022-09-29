@@ -55,7 +55,7 @@ class FaturaService {
         }
     }
 
-    public function persistirFatura($cartao, $data, $valor = null) {
+    public function persistirFatura($cartao, $data, $valor = null):int {
         if (is_null($valor)) {
             $valor = 0.0;
         }
@@ -72,10 +72,12 @@ class FaturaService {
             $fatura->isPaga = 0;
             $fatura->id_cartao = $cartao->getId();
             $fatura->id_cartao_data = $id_cartao_data;
-            $this->faturaRepository->criarFatura($fatura);
+            $id_fatura_inserted = $this->faturaRepository->criarFatura($fatura);
+            return $id_fatura_inserted;
         } else {
             $faturaModel->valor += $valor;
             $this->faturaRepository->criarFatura($faturaModel);
+            return $faturaModel->id;
         }
     }
 
