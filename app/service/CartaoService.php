@@ -19,15 +19,11 @@ class CartaoService {
 
     public function buscarCartoes(): Response {
         try {
-            $cartoes = $this->cartaoRepository->buscarCartoes();
-            $response = $cartoes->map(function ($x) {
-                $cartaoDTO = new CartaoDTO($x);
-                return $cartaoDTO->objecToArray();
-            })->toArray();
+            $response = $this->cartaoRepository->buscarCartoes();
             return Response($response, 200)
                 ->header('Content-Type', 'application/json');
         } catch (PDOException $th) {
-            return Response(["mensagem" => $th->getMessage()], 500)
+            return Response(["mensagem" => $th->getMessage()()], 500)
                 ->header('Content-Type', 'application/problem');
         }
     }

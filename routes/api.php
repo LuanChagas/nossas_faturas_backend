@@ -3,7 +3,7 @@
 use App\Http\Controllers\CartaoController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\FaturaController;
-use App\Http\Controllers\PessoaController;
+use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,8 +21,8 @@ use Illuminate\Support\Facades\Route;
     return $request->user();
 }); */
 
-Route::get('/pessoa', [PessoaController::class,'index']);
-Route::post('/pessoa', [PessoaController::class,'criar']);
+Route::get('/usuario', [UsuarioController::class,'index']);
+Route::post('/usuario', [UsuarioController::class,'criar']);
 
 
 Route::get('/cartoes', [CartaoController::class,'index']);

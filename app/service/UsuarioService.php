@@ -2,24 +2,24 @@
 
 namespace App\service;
 
-use App\DTOs\PessoaDTO;
-use App\Models\Pessoa;
-use App\repository\PessoaRepository;
+use App\DTOs\UsuarioDTO;
+use App\Models\Usuario;
+use App\repository\UsuarioRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use PDOException;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
-class PessoaService {
-    private $pessoaRepository;
+class UsuarioService {
+    private $usuarioRepository;
 
     public function __construct() {
-        $this->pessoaRepository = new PessoaRepository();
+        $this->usuarioRepository = new UsuarioRepository();
     }
 
-    public function buscarPessoas(): Response {
+    public function buscarUsuarios(): Response {
         try {
-            $response = $this->pessoaRepository->buscarPessoas();
+            $response = $this->usuarioRepository->buscarUsuarios();
             return response($response)
                 ->header('Content-Type', 'application/json');
         } catch (PDOException $th) {
@@ -28,12 +28,12 @@ class PessoaService {
         }
     }
 
-    public function criarPessoa(Request $request): Response {
+    public function criarUsuario(Request $request): Response {
         try {
-            $pessoaDTO = new PessoaDTO($request);
-            $pessoa = new Pessoa($pessoaDTO);
-            $this->pessoaRepository->criarPessoa($pessoa);
-            return response(["mensagem" => "Pessoa criada com sucesso"], 201)
+            $usuarioDTO = new UsuarioDTO($request);
+            $usuario = new Usuario($usuarioDTO);
+            $this->usuarioRepository->criarusuario($usuario);
+            return response(["mensagem" => "usuario criado com sucesso"], 201)
                 ->header('Content-Type', 'application/json');
         } catch (PDOException $th) {
             return response(["mensagem" => $th->getMessage()], 500)

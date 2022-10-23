@@ -2,25 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pessoa;
-use App\repository\PessoaRepository;
-use App\service\PessoaService;
+use App\service\UsuarioService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 
-class PessoaController extends Controller {
+class UsuarioController extends Controller {
     private $pessoaService;
 
     public function __construct() {
-        $this->pessoaService = new PessoaService();
+        $this->pessoaService = new UsuarioService();
     }
     public function index():Response {
-        return $this->pessoaService->buscarPessoas();
+        return $this->pessoaService->buscarUsuarios();
     }
 
     public function criar(Request $request):Response {
-       $response = $this->pessoaService->criarPessoa($request);
+       $response = $this->pessoaService->criarUsuario($request);
        return $response;
     }
 }

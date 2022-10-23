@@ -9,18 +9,20 @@ class Compra extends Model {
 
     public function __construct(?object $obj = null) {
         if ($obj) {
-            $this->nome = $obj->getNome();
             $this->descricao = $obj->getDescricao();
+            $this->local = $obj->getLocal();
             $this->data_compra = $obj->getDataCompra();
             $this->valor = $obj->getValor();
             $this->parcelas = $obj->getParcelas();
-            $this->id_pessoa = $obj->getIdPessoa();
+            $this->id_usuario = $obj->getIdUsuario();
             $this->id_cartao = $obj->getIdCartao();
         }
     }
-
+    protected $casts = [
+        'valor' => 'double',
+    ];
     public function pessoas(){
-        return $this->hasMany(Pessoa::class,'id_pessoa');
+        return $this->hasMany(Pessoa::class,'id_usuario');
     }
 
     public function cartao(){

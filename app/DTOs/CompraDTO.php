@@ -10,12 +10,12 @@ use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 class CompraDTO {
 
     private $id;
-    private $nome;
     private $descricao;
+    private $local;
     private $data_compra;
     private $valor;
     private $parcelas;
-    private $id_pessoa;
+    private $id_usuario;
     private $id_cartao;
 
     public function __construct(?object $compra = null) {
@@ -24,12 +24,12 @@ class CompraDTO {
             if ($compra->id) {
                 $this->setId($compra->id);
             }
-            $this->setNome($compra->nome);
+            $this->setLocal($compra->local);
             $this->setDescricao($compra->descricao);
             $this->setDataCompra($compra->data_compra);
             $this->setValor($compra->valor);
             $this->setParcelas($compra->parcelas);
-            $this->setIdPessoa($compra->id_pessoa);
+            $this->setIdUsuario($compra->id_usuario);
             $this->setIdCartao($compra->id_cartao);
         }
     }
@@ -47,15 +47,15 @@ class CompraDTO {
         throw new BadRequestException($rs["mensagem"]);
     }
 
-    public function getNome(): String {
-        return $this->nome;
+    public function getLocal(): String {
+        return $this->local;
     }
 
-    public function setNome($nome) {
-        $identificador = "Nome";
-        $rs = Validacao::validarNome($nome, $identificador);
+    public function setLocal($local) {
+        $identificador = "local";
+        $rs = Validacao::validarNome($local, $identificador);
         if ($rs["resultado"]) {
-            $this->nome = $nome;
+            $this->local = $local;
             return;
         }
         throw new BadRequestException($rs["mensagem"]);
@@ -121,15 +121,15 @@ class CompraDTO {
         throw new BadRequestException($mensagem);
     }
 
-    public function getIdPessoa(): Int {
-        return $this->id_pessoa;
+    public function getIdUsuario(): Int {
+        return $this->id_usuario;
     }
 
-    public function setIdPessoa($id_pessoa) {
+    public function setIdUsuario($id_usuario) {
         $mensagem = "";
-        if (isset($id_pessoa)) {
-            if (is_int($id_pessoa)) {
-                $this->id_pessoa = $id_pessoa;
+        if (isset($id_usuario)) {
+            if (is_int($id_usuario)) {
+                $this->id_usuario = $id_usuario;
                 return;
             } else {
                 $mensagem = "id_pessoa não é um formato inteiro";
@@ -161,12 +161,12 @@ class CompraDTO {
 
     public function objectToArray() {
         return [
-            "nome" => $this->getNome(),
             "descricao" => $this->getDescricao(),
+            "local" => $this->getlocal(),
             "data_compra" => $this->getDataCompra()->format("Y-m-d"),
             "valor" => $this->getValor(),
             "parcelas" => $this->getParcelas(),
-            "id_pessoa" => $this->getIdPessoa(),
+            "id_usuario" => $this->getIdUsuario(),
             "id_cartao" => $this->getIdCartao(),
         ];
     }

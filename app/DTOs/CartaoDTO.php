@@ -3,6 +3,7 @@
 namespace App\DTOs;
 
 use App\Utils\Validacao;
+use PhpParser\Node\Expr\Cast\Double;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 class CartaoDTO {
@@ -15,21 +16,25 @@ class CartaoDTO {
     private $limite_total;
     private $limite_parcial;
 
-    public function __construct(?object $cartao = null) {
-        if ($cartao) {
-            if ($cartao->id) {
-                $this->id = $cartao->id;
+    public function __construct(?object $obj = null) {
+        if ($obj) {
+            if ($obj->id) {
+                $this->id = $obj->id;
             }
-            $this->nome = $cartao->nome;
-            $this->pix = $cartao->pix;
-            $this->dia_fechamento = $cartao->dia_fechamento;
-            $this->dia_vencimento = $cartao->dia_vencimento;
-            $this->limite_total = $cartao->limite_total;
-            $this->limite_parcial = $cartao->limite_parcial;
+            if ($obj->limite_parcial) {
+                $this->setLimiteParcial($obj->limite_parcial);
+            }
+            $this->setNome($obj->nome);
+            $this->setPix($obj->pix);
+            $this->setDiaFechamento($obj->dia_fechamento);
+            $this->setDiaVencimento($obj->dia_vencimento);
+            $this->setLimiteTotal($obj->limite_total);
+            $this->setLimiteParcial($obj->limite_total);
+
         }
     }
 
-    public function getId(): Int {
+    public function getId(): Int|null {
         return $this->id;
     }
 
@@ -103,11 +108,11 @@ class CartaoDTO {
         return $this->limite_total;
     }
 
-    public function setLimiteTotal($limite_total) {
+    public function setLimiteTotal(float $limite_total) {
         $identificador = "Limite total";
         $rs = Validacao::validarDecimal($limite_total, $identificador);
         if ($rs["resultado"]) {
-            $this->$limite_total = $limite_total;
+            $this->limite_total = $limite_total;
             return;
         }
         throw new BadRequestException($rs["mensagem"]);
@@ -117,11 +122,13 @@ class CartaoDTO {
         return $this->limite_parcial;
     }
 
-    public function setLimiteParcial($limite_parcial) {
+    public function setLimiteParcial( float $limite_parcial) {
+        
         $identificador = "Limite parcial";
         $rs = Validacao::validarDecimal($limite_parcial, $identificador);
+        
         if ($rs["resultado"]) {
-            $this->$limite_parcial = $limite_parcial;
+            $this->limite_parcial = $limite_parcial;
             return;
         }
         throw new BadRequestException($rs["mensagem"]);

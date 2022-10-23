@@ -27,11 +27,7 @@ class FaturaService {
 
     public function buscarFaturas(): Response {
         try {
-            $fatura = $this->faturaRepository->buscarTodasFaturas();
-            $response = $fatura->map(function ($x) {
-                $fat = new FaturaDTO($x);
-                return $fat->objectToArray();
-            });
+            $response = $this->faturaRepository->buscarTodasFaturas();
             return response($response, 200)->header('Content-Type', 'application/json');
         } catch (PDOException $th) {
             return response(["mensagem" => $th->getMessage()], 500)
@@ -61,9 +57,9 @@ class FaturaService {
         }
         $ano = date('Y', $data->getTimestamp());
         $mes = date('m', $data->getTimestamp());
-        $id_cartao_data = $cartao->getId() . "$mes$ano";
+        $identificador = intval($cartao->getId() . "$mes$ano");
 
-        $faturaModel = $this->faturaRepository->buscarFaturaUmParametro('id_cartao_data', $id_cartao_data);
+        $faturaModel = $this->faturaRepository->buscarFaturaUmParametro('identificador', $identificador);
         if (is_null($faturaModel)) {
             $fatura = new Fatura();
             $fatura->valor = $valor;
@@ -71,7 +67,7 @@ class FaturaService {
             $fatura->isFechada = 0;
             $fatura->isPaga = 0;
             $fatura->id_cartao = $cartao->getId();
-            $fatura->id_cartao_data = $id_cartao_data;
+            $fatura->identificador = $identificador;
             $id_fatura_inserted = $this->faturaRepository->criarFatura($fatura);
             return $id_fatura_inserted;
         } else {

@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Pessoa extends Model {
+class Usuario extends Model {
 
 
     public function __construct(?object $pessoa=null) {
@@ -15,9 +15,9 @@ class Pessoa extends Model {
     }
 
     public function compras(){
-        return $this->hasMany(Compra::class,'id_pessoa');
+        return $this->hasMany(Compra::class,'id_usuario');
     }
     
-    protected $table = 'pessoas';
+    protected $table = 'usuarios';
     public $timestamps = false;
 }

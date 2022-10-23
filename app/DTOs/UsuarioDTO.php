@@ -6,17 +6,17 @@ use App\Utils\Validacao;
 use Faker\Core\Number;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
-class PessoaDTO {
+class UsuarioDTO {
 
     private $id;
     private $nome;
 
-    public function __construct(?Object $pessoa = null) {
-        if (isset($pessoa)) {
-            if (isset($pessoa->id)) {
-                $this->setId($pessoa->id);
+    public function __construct(?Object $usuario = null) {
+        if (isset($usuario)) {
+            if (isset($usuario->id)) {
+                $this->setId($usuario->id);
             }
-            $this->setNome($pessoa->nome);
+            $this->setNome($usuario->nome);
         }
     }
 

@@ -14,7 +14,7 @@ class FaturaDTO {
     private $isFechada;
     private $isPaga;
     private $id_cartao;
-    private $id_cartao_data;
+    private $identificador;
 
     public function __construct(object $fatura = null) {
         if ($fatura) {
@@ -26,7 +26,7 @@ class FaturaDTO {
             $this->setIsFechada($fatura->isFechada);
             $this->setIsPaga($fatura->isPaga);
             $this->setIdCartao($fatura->id_cartao);
-            $this->setIdCartaoData($fatura->id_cartao_data);
+            $this->setIdentificador($fatura->identificador);
         }
     }
 
@@ -48,7 +48,7 @@ class FaturaDTO {
         return $this->valor;
     }
 
-    public function setValor($valor) {
+    public function setValor(float $valor) {
         $identificador = "Valor";
         $rs = Validacao::validarDecimal($valor, $identificador);
         if ($rs["resultado"]) {
@@ -119,15 +119,15 @@ class FaturaDTO {
         throw new BadRequestException($rs["mensagem"]);
     }
 
-    public function getIdCartaoData(): Int {
-        return $this->id_cartao_data;
+    public function getIdentificador(): Int {
+        return $this->identificador;
     }
 
-    public function setIdCartaoData($id_cartao_data) {
+    public function setIdentificador($identificador) {
         $identificador = "Identificador único da fatura";
-        $rs = Validacao::validarInteiro(intval($id_cartao_data), $identificador);
+        $rs = Validacao::validarInteiro(intval($identificador), $identificador);
         if ($rs["resultado"]) {
-            $this->id_cartao_data = $id_cartao_data;
+            $this->identificador = $identificador;
             return;
         }
         throw new BadRequestException($rs["mensagem"]);
@@ -141,7 +141,7 @@ class FaturaDTO {
             "isFechada" => $this->getIsFechada(),
             "isPaga" => $this->getIsPaga(),
             "id_cartao" => $this->getIdCartao(),
-            "id_cartao_data" => $this->getIdCartaoData(),
+            "identificador" => $this->getIdentificador(),
         ];
     }
 }

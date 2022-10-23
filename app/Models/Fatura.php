@@ -16,9 +16,13 @@ class Fatura extends Model {
             $this->isFechada = $obj->getIsFechada();
             $this->isPaga = $obj->getIsPaga();
             $this->id_cartao = $obj->getIdCartao();
-            $this->id_cartao_data = $obj->getIdCartaoData();
+            $this->identificador = $obj->getIdentificador();
         }
     }
+
+    protected $casts = [
+        'valor' => 'double',
+    ];
 
     public function cartao() {
         $this->hasMany(Cartao::class, 'id_cartao');

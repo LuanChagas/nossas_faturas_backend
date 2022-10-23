@@ -11,10 +11,14 @@ class FaturaCompra extends Model
         if ($obj) {
             $this->id_fatura = $obj->getIdFatura();
             $this->id_compra = $obj->getIdCompra();
-            $this->descricao = $obj->getDescricao();
+            $this->parcela = $obj->getParcela();
             $this->valor = $obj->getValor();
         }
     }
+
+    protected $casts = [
+        'valor' => 'double',
+    ];
 
     public function fatura(){
         return $this->belongsTo(Fatura::class,'id_fatura');

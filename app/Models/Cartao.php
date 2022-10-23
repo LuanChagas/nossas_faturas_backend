@@ -9,16 +9,22 @@ class Cartao extends Model
 {
     public function __construct(?object $atributos=null) {
         if($atributos){
-            $this->id = $atributos->id;
-            $this->nome = $atributos->nome;
-            $this->pix = $atributos->pix;
-            $this->dia_fechamento = $atributos->dia_fechamento;
-            $this->dia_vencimento = $atributos->dia_vencimento;
-            $this->limite_total = $atributos->limite_total;
-            $this->limite_parcial = $atributos->limite_parcial;
+            if($atributos->getId()){
+            $this->id = $atributos->getId();
+            }
+            $this->nome = $atributos->getNome();
+            $this->pix = $atributos->getPix();
+            $this->dia_fechamento = $atributos->getDiaFechamento();
+            $this->dia_vencimento = $atributos->getDiaVencimento();
+            $this->limite_total = $atributos->getLimiteTotal();
+            $this->limite_parcial = $atributos->getLimiteParcial();
         }
        
     }
+    protected $casts = [
+        'limite_total' => 'double',
+        'limite_parcial' => 'double',
+    ];
 
     public function fatura(){
         $this->hasMany(Fatura::class);

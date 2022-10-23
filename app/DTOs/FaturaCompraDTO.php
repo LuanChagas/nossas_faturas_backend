@@ -9,7 +9,7 @@ class FaturaCompraDTO {
     private $id;
     private $id_fatura;
     private $id_compra;
-    private $descricao;
+    private $parcela;
     private $valor;
 
     public function __construct(?object $obj = null) {
@@ -19,7 +19,7 @@ class FaturaCompraDTO {
             }
             $this->setIdFatura($obj->id_fatura);
             $this->setIdCompra($obj->id_compra);
-            $this->setDescricao($obj->descricao);
+            $this->setParcela($obj->parcela);
             $this->setValor($obj->valor);
         }
     }
@@ -70,15 +70,15 @@ class FaturaCompraDTO {
         throw new BadRequestException($rs["mensagem"]);
     }
 
-    public function getDescricao() {
-        return $this->descricao;
+    public function getParcela() {
+        return $this->parcela;
     }
 
-    public function setDescricao($descricao) {
+    public function setParcela($parcela) {
         $identificador = "Descrição";
-        $rs = Validacao::validarNome($descricao, $identificador);
+        $rs = Validacao::validarNome($parcela, $identificador);
         if ($rs["resultado"]) {
-            $this->descricao = $descricao;
+            $this->parcela = $parcela;
             return;
         }
         throw new BadRequestException($rs["mensagem"]);
